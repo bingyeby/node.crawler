@@ -113,6 +113,7 @@ let getPy = async () => {
     return b
   })
   // {title:'',titlePy:'',contentList:[{content:'',contentPy:''}]}
+  console.log(`getPy splitIndex`, splitInfo);
 }
 
 getPy()
