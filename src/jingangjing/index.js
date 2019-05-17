@@ -6,15 +6,14 @@ if (process.stdout.getWindowSize) {
 let path = require('path')
 let cheerio = require('cheerio')
 let superagent = require('superagent')
-
-let util = require('./util')
-
+let util = require('../util/index.js')
 let _ = require('lodash')
+let iconv = require('iconv-lite')
+let charset = require("superagent-charset");
 
-var iconv = require('iconv-lite')
 
-var charset = require("superagent-charset");
 charset(superagent); //设置字符
+
 /**
  * 根据response.text获取文本信息
  * @param resText
@@ -24,6 +23,9 @@ let getContentInText = (resText) => {
   return $('.STYLE4').text()
 }
 
+/*
+* 根据URL获取text
+* */
 let getUrlResText = (url) => {
   return new Promise((resolve, reject) => {
     superagent
