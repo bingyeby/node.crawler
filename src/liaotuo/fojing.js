@@ -120,13 +120,18 @@ let getZhangJieWithLieBiaoUrl = async (lieBiaoUrl) => {
 }
 
 /*
-* 根据原文页面的url获取原文内容的url
-*   直接显示内容 (http://www.liaotuo.org/fojing/yuanjuejing/yuanwen.html)
-*   章节(整体出现,自动补充列表) (http://www.liaotuo.org/fojing/chengweishilun/yuanwen.html)
+* 获取某个分支的文章列表
+*   需考虑分页情况
+*   res 为存储介质
+*   url 某个经书的一个分支列表(译文|讲解|问答)
 *
-*   文章 (http://www.liaotuo.org/fojing/wuliangshoujing/yuanwen.html)
-*   列表 - 章节
+* 原文
+*    根据原文页面的url获取原文内容的url
+*      直接显示内容 (http://www.liaotuo.org/fojing/yuanjuejing/yuanwen.html)
+*      章节(整体出现,自动补充列表) (http://www.liaotuo.org/fojing/chengweishilun/yuanwen.html)
 *
+*      文章 (http://www.liaotuo.org/fojing/wuliangshoujing/yuanwen.html)
+*      列表 - 章节
 *
 * @return
 * [
@@ -134,11 +139,11 @@ let getZhangJieWithLieBiaoUrl = async (lieBiaoUrl) => {
 *   {name: '', type: '列表', url: ''},
 * ]
 * */
-let getYuanWen = async (yuanWenUrl) => {
-  let text = await getUrlResText(yuanWenUrl)
+let getYuanWen = async (l2Url) => {
+  let text = await getUrlResText(l2Url)
   let $ = cheerio.load(text)
 
-  let yuanWenList = []
+  let infoList = []
   if ($('.B3_list').length > 0) {// 列表形式展开
     let pageList = []
     $('.B3_list li').each((index, ele) => {
@@ -152,7 +157,7 @@ let getYuanWen = async (yuanWenUrl) => {
 
     await util.asyncEach(pageList, async (n) => {
       if (n.type === '列表') {// 列表继续获取子章节
-        n.children = await  getZhangJieWithLieBiaoUrl(n.url)
+        n.children = await getZhangJieWithLieBiaoUrl(n.url)
       }
     })
 
@@ -161,19 +166,20 @@ let getYuanWen = async (yuanWenUrl) => {
     })
 
     if (isAllZhangJie) {// 列表皆为章节
-      yuanWenList = [
+      infoList = [
         {type: '列表', name: $('.B3_tit b').text(), children: pageList}
       ]
     } else {// 有文章或列表
-      yuanWenList = pageList
+      infoList = pageList
     }
   } else if ($('.B1_text').length > 0) {// 直接显示文本
-    yuanWenList = [
-      {type: '文章', name: $('.B1_tit').text(), url: yuanWenUrl, author: $('.B1_dh span').eq(1).text().replace('作者：', '')}
+    infoList = [
+      {type: '文章', name: $('.B1_tit').text(), url: l2Url, author: $('.B1_dh span').eq(1).text().replace('作者：', '')}
     ]
   }
-  return yuanWenList
+  return infoList
 }
+
 
 /*
 * 获取一个文章
