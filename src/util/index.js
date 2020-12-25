@@ -59,7 +59,7 @@ async function delay(time) {
  * @param url
  * @returns {Promise<any>}
  */
-let urlResponse = (url, option = {}) => {
+let urlResponse = (url, option = {}) => {urlResponse
   return new Promise((resolve, reject) => {
     superagent
         .get(url)
