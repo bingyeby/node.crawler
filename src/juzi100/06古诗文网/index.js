@@ -35,7 +35,7 @@ let getFullText = async (query) => {
   })
 
   let time = new Date().getTime()
-  await util.writeArrayToJsonFile(`./${query.tstr}_名句.json`, list, { flag: 'a' })
+  await util.writeArrayToJsonFile(`./${query.tstr || query.xstr}_名句.json`, list, { flag: 'a' })
 }
 
 let getPageTotal = async (query) => {
@@ -51,12 +51,12 @@ let getPageTotal = async (query) => {
   }
 }
 
-let postListInfo = async (tstr) => {
-  let pageTotal = await getPageTotal({ tstr }) || 10
-  await util.writeArrayToJsonFile(`./${tstr}_名句.json`, [])
+let postListInfo = async ({ tstr, xstr }) => {
+  let pageTotal = await getPageTotal({ tstr, xstr }) || 10
+  await util.writeArrayToJsonFile(`./${tstr || xstr}_名句.json`, [])
   await util.asyncEach(_.times(pageTotal), async (n, i) => {
     await util.delay()
-    await getFullText({ tstr, page: i + 1 })
+    await getFullText({ tstr, xstr, page: i + 1 })
   })
 }
 
@@ -66,6 +66,7 @@ async function main() {
   // let tstr = '荀子'
   // postListInfo(tstr)
 
+  // tstr
   util.asyncEach([
 
     //  2020年12月30日20:25:45
@@ -85,7 +86,14 @@ async function main() {
     // "格言联璧", "围炉夜话", "增广贤文", "吕氏春秋", "文心雕龙", "醒世恒言", "警世通言", "幼学琼林", "小窗幽记", "贞观政要",
 
   ], async (tstr) => {
-    await postListInfo(tstr)
+    await postListInfo({ tstr })
+  })
+
+  // xstr=
+  util.asyncEach([
+    '谚语',
+  ], async (xstr) => {
+    await postListInfo({ xstr })
   })
 
 }
