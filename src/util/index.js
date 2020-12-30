@@ -62,7 +62,7 @@ async function delay(time = 1000) {
  * @param url
  * @returns {Promise<any>}
  */
-let urlResponse = (url, option = {}) => {
+let urlResponse = (url, option = {}) => {urlResponse
   return new Promise((resolve, reject) => {
     superagent.get(url).charset(option.charset || 'gbk').set('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36').then((res) => {
       resolve(res.text)
