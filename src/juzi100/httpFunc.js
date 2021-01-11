@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-function main() {
+export function main() {
 // 发送 POST 请求
   axios({
     method: 'post',

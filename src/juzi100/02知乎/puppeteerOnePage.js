@@ -3,7 +3,8 @@ const _ = require('lodash')
 const util = require('../../util')
 
 /*
-* 滚动下降一次,页面新请求到的数据
+* 执行滚动到页面底部一次,页面则会增加新的数据
+* 获取到新的数据,返回(list.slice(刷新前的list数目,刷新后的list数据))
 *
 * */
 async function getNewScrollList(page, pageListItemDomSize) {
@@ -35,14 +36,17 @@ async function getNewScrollList(page, pageListItemDomSize) {
             console.log(`answerHtml`, answerHtml)
 
             return {
-              upvoteCount,// 点赞数
-              dateCreated,// 创建时间
+              answerItemId: answerInfo.itemId, // id 549811428 => https://www.zhihu.com/question/266574241/answer/549811428
+              answerItemUrl,// url 可以单独打开
+
+              answerAuthorName,// 回答者昵称
+              answerDate: dateCreated,// 回答时间
+              answerAuthorUrl,// 回答者头像
+
+              answerUpNumber: upvoteCount,// 点赞数
               answerCommentCount,// 评论数量
-              answerItemId: answerInfo.itemId, // https://www.zhihu.com/question/266574241/answer/549811428
-              answerItemUrl,
-              answerAuthorUrl,
-              answerAuthorName,
-              answerHtml,
+
+              answerHtml,// 回答内容HTML
             }
           })
           clearInterval(timeId)
@@ -72,7 +76,7 @@ async function main() {
 
   const page = await browser.newPage()  // 打开空白页面
   await page.setViewport({ width: 1000, height: 800 })// 控制视图大小
-  await page.goto('https://www.zhihu.com/question/266574241')// 打开页面
+  await page.goto('https://www.zhihu.com/question/394252086')// 打开页面
 
   // 控制表单 对input框填充数据
   // await page.type('#kw', 'puppeteer')
@@ -92,8 +96,7 @@ async function main() {
 
   // 在浏览器页面中执行如下代码,并将执行后结果返回到node.js
   // 操作dom元素2: 在页面上下文中执行 获取打开的网页中的宿主环境 // 打印语句在浏览器控制台看见
-  let pageInfo = await page.evaluate((config) => {
-
+  let questionInfo = await page.evaluate((config) => {
     console.log(`111`, 111)
 
     let questionInfoStr = document.querySelector('div[data-zop-question]').getAttribute('data-zop-question')
@@ -111,17 +114,19 @@ async function main() {
     })
   }, {})
 
-  console.log(`pageInfo`, pageInfo)
+  console.log(`pageInfo`, questionInfo)
 
   let pageListItemDomSize = await page.evaluate((arr) => {
     let res = document.querySelectorAll('div.List-item').length || 0
     return Promise.resolve(res)
   })
+
   console.log(`pageListItemDomSize`, pageListItemDomSize)
 
   await util.asyncEach(_.times(3), async (n, i) => {
     let newScrollList = await getNewScrollList(page, n)
     console.log(`newScrollList`, newScrollList)
+    await util.writeArrayToJsonFile(`./1.json`, newScrollList, { flag: 'a' })
   })
 
   console.log(`end...`)
