@@ -1,13 +1,15 @@
 const axios = require('axios')
 
-export function main() {
+function main() {
 // 发送 POST 请求
   axios({
     method: 'post',
     url: 'https://1f1f5537-df24-4928-80f4-3a52a2899757.bspapp.com/http/common-opt',
     data: {
-      collection: 'juzi-dict',
-      optList: [{ optKey: 'get', optValue: null }],
+      optList: [
+        { optKey: 'collection', optValue: 'juzi-dict' },
+        { optKey: 'get', optValue: null },
+      ],
     },
   }).then((res) => {
     console.log(`res`, res)
