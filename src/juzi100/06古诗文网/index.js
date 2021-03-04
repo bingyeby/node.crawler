@@ -8,12 +8,19 @@ let util = require('../util/index.js')
 let _ = require('lodash')
 let iconv = require('iconv-lite')
 const querystring = require('querystring')
+
+
 /*
-*
+* query
+*   page  页码
+*   tstr  类型
+*   astr  作者
+*   cstr  先秦
+*   xstr  形式
 * */
 let getFullText = async (query) => {
   query.page = query.page || 1
-  // ?page=1&tstr=&astr=&cstr=&xstr=
+  // https://so.gushiwen.cn/mingjus/default.aspx?page=2&tstr=梅花&astr=&cstr=&xstr=
   let pageText = await util.urlResponse(`https://so.gushiwen.cn/mingjus/default.aspx?${querystring.stringify(query)}`, { charset: 'utf-8' })
   let $ = cheerio.load(pageText)
 
@@ -80,10 +87,12 @@ async function main() {
     // '三国演义', '红楼梦', '水浒传', '西游记',
 
     // 2020年12月30日20:27:58
-    // "韩非子", "罗织经", "菜根谭", "红楼梦", "弟子规", "战国策", "后汉书", "淮南子", "商君书",
+    // "韩非子", "罗织经", "菜根谭", "红楼梦",
+    // "弟子规", "战国策", "后汉书", "淮南子", "商君书",
 
     // 2020年12月30日20:29:40
-    // "格言联璧", "围炉夜话", "增广贤文", "吕氏春秋", "文心雕龙", "醒世恒言", "警世通言", "幼学琼林", "小窗幽记", "贞观政要",
+    // "格言联璧", "围炉夜话", "增广贤文", "吕氏春秋",
+    // "文心雕龙", "醒世恒言", "警世通言", "幼学琼林", "小窗幽记", "贞观政要",
 
   ], async (tstr) => {
     await postListInfo({ tstr })
