@@ -4,13 +4,15 @@ if (process.stdout.getWindowSize) {
 }
 let path = require('path')
 let cheerio = require('cheerio')
-let util = require('../util/index.js')
+let util = require('../../util/index.js')
 let _ = require('lodash')
 let iconv = require('iconv-lite')
 const querystring = require('querystring')
-
+const fss = require('fs-extra')
 
 /*
+*
+* 获取一页中的段落列表
 * query
 *   page  页码
 *   tstr  类型
@@ -41,10 +43,14 @@ let getFullText = async (query) => {
     })
   })
 
-  let time = new Date().getTime()
-  await util.writeArrayToJsonFile(`./${query.tstr || query.xstr}_名句.json`, list, { flag: 'a' })
+  return list
 }
 
+/**
+ * 获取总页数
+ * @param query 查询
+ * @returns {Promise<*>}
+ */
 let getPageTotal = async (query) => {
   let pageText = await util.urlResponse(`https://so.gushiwen.cn/mingjus/default.aspx?${querystring.stringify(query)}`, { charset: 'utf-8' })
   let $ = cheerio.load(pageText)
@@ -58,12 +64,22 @@ let getPageTotal = async (query) => {
   }
 }
 
+/**
+ * 获取总页数
+ * 遍历页码,获取每一页的数据
+ * @param tstr
+ * @param xstr
+ * @returns {Promise<void>}
+ */
 let postListInfo = async ({ tstr, xstr }) => {
   let pageTotal = await getPageTotal({ tstr, xstr }) || 10
-  await util.writeArrayToJsonFile(`./${tstr || xstr}_名句.json`, [])
+  let jsonFile = `./2021-03-04/${tstr || xstr}_名句.json`
+  await fss.ensureFile(jsonFile)
+  await util.writeArrayToJsonFile(jsonFile, [])
   await util.asyncEach(_.times(pageTotal), async (n, i) => {
     await util.delay()
-    await getFullText({ tstr, xstr, page: i + 1 })
+    let list = await getFullText({ tstr, xstr, page: i + 1 }) // 获取每一页的句子
+    await util.writeArrayToJsonFile(jsonFile, list, { flag: 'a' })
   })
 }
 
@@ -77,22 +93,23 @@ async function main() {
   util.asyncEach([
 
     //  2020年12月30日20:25:45
-    // '读书', '爱情', '励志',
+    // '读书',
+    '爱情', '励志',
 
-    // 2020年12月30日20:25:00
     // '荀子', '孟子', '论语', '墨子', '老子', '史记', '中庸', '礼记', '尚书',
     // '晋书', '左传', '论衡', '管子', '说苑', '列子', '国语',
 
-    // 2020年12月30日20:26:39
     // '三国演义', '红楼梦', '水浒传', '西游记',
 
-    // 2020年12月30日20:27:58
-    // "韩非子", "罗织经", "菜根谭", "红楼梦",
-    // "弟子规", "战国策", "后汉书", "淮南子", "商君书",
+    '韩非子', '罗织经', '菜根谭',
+    // "红楼梦", "弟子规", "战国策", "后汉书", "淮南子", "商君书",
 
-    // 2020年12月30日20:29:40
-    // "格言联璧", "围炉夜话", "增广贤文", "吕氏春秋",
-    // "文心雕龙", "醒世恒言", "警世通言", "幼学琼林", "小窗幽记", "贞观政要",
+    // "格言联璧", "围炉夜话",
+    '增广贤文',
+    // "吕氏春秋",
+    // "文心雕龙",
+    '醒世恒言', '警世通言',
+    // "幼学琼林", "小窗幽记", "贞观政要",
 
   ], async (tstr) => {
     await postListInfo({ tstr })
@@ -100,7 +117,7 @@ async function main() {
 
   // xstr=
   util.asyncEach([
-    '谚语',
+    // '谚语',
   ], async (xstr) => {
     await postListInfo({ xstr })
   })
