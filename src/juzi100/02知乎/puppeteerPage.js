@@ -86,12 +86,9 @@ async function main() {
   page.waitForSelector('.PaginationButton-next').then(async () => {
     console.log(`333333`, 333333)
     page.tap('.PaginationButton-next')// 操作dom元素
-
     await util.delay(3000)
     let queryPage = querystring.parse(url.parse(page.url()).query).page
-
     console.log(`queryPage`, queryPage)
-
   })
 
   // 2. 分页查询 (按时间排序)

@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer')
 const _ = require('lodash')
 const util = require('../../util')
 const fss = require('fs-extra')
+const dayjs = require('dayjs')
 
 /*
 * 执行滚动到页面底部一次,页面则会增加新的数据
@@ -76,27 +77,26 @@ async function getNewScrollList2(page, itemNumber) {
       itemListData.push({
           questionId: window.location.href.match(/question\/(\d+)/)[1],
 
-          answerId: answerInfo.itemId, // answerId 549811428 => https://www.zhihu.com/question/266574241/answer/549811428
-
-          answerUpCount: item.find('[itemprop="upvoteCount"]').attr('content'),// 点赞数
-          answerCommentCount: item.find('[itemprop="commentCount"]').attr('content'),// 评论数量
+          answerId: `${answerInfo.itemId}`, // answerId 549811428 => https://www.zhihu.com/question/266574241/answer/549811428
+          answerUpCount: Number(item.find('[itemprop="upvoteCount"]').attr('content')),// 点赞数
+          answerCommentCount: Number(item.find('[itemprop="commentCount"]').attr('content')),// 评论数量
           answerDate: item.find('[itemprop="dateCreated"]').attr('content'),// 回答时间
           answerUrl: item.find('.ContentItem-time a').attr('href'),// url 可以单独打开
-          // answerHtml: item.find('.RichContent-inner').html(),// 回答内容HTML
           answerAuthorName: item.find('.AnswerItem-authorInfo [itemprop="name"]').attr('content'),// 回答者昵称
+          answerHtml: item.find('.RichContent-inner').html(),// 回答内容HTML
         },
       )
     })
     console.log(`itemListData`, itemListData)
     window.scroll(0, window.document.body.scrollHeight)
-    await util.delay(3000) // 延迟等待页面滚动后数据加载
+    await util.delay(5000) // 延迟等待页面滚动后数据加载
     itemList.remove()
-    $('.Pc-word').remove()
+    // $('.Pc-word').remove() // 清除广告
     return itemListData
   }, itemNumber)
 }
 
-async function main() {
+async function main(url) {
   // 启动浏览器
   const browser = await puppeteer.launch({
     headless: false,      //  关闭无头模式，方便我们看到这个无头浏览器执行的过程
@@ -104,12 +104,11 @@ async function main() {
     devtools: true,    //  是否打开控制台  当此值为true时, headless总为false
     // executablePath: '',    // 若是手动下载的chromium需要指定chromium地址, 默认引用地址为 /项目目录/node_modules/puppeteer/.local-chromium/
     // ignoreHTTPSErrors: true,    //如果是访问https页面 此属性会忽略https错误
-
   })
 
   const page = await browser.newPage()  // 打开空白页面
   await page.setViewport({ width: 1200, height: 800 })// 控制视图大小
-  await page.goto('https://www.zhihu.com/question/394252086')// 打开页面
+  await page.goto(url)// 打开页面
 
   // 控制表单 对input框填充数据
   // await page.type('#kw', 'puppeteer')
@@ -121,9 +120,8 @@ async function main() {
   await util.addScriptFile(page, './js/lodash.min.js')
   await util.addScriptFile(page, './js/util.js')
 
-  // 等待一个元素出现后点击该元素
+  // 等待一个元素出现后点击该元素(登录提醒框)
   page.waitForSelector('.Modal-closeButton').then(async () => {
-    console.log(`112`, 112)
     page.tap('.Modal-closeButton')// 操作dom元素
   })
 
@@ -131,25 +129,17 @@ async function main() {
 
   // 在浏览器页面中执行如下代码,并将执行后结果返回到node.js
   // 操作dom元素2: 在页面上下文中执行 获取打开的网页中的宿主环境 // 打印语句在浏览器控制台看见
-  let questionInfo = await page.evaluate((config) => { // config => 接受普通对象,函数不接受
-    console.log(`111`, 111)
-    let questionInfoStr = document.querySelector('div[data-zop-question]').getAttribute('data-zop-question')
+  let questionInfo = await page.evaluate((config) => { // config => 接受普通对象|字符串,不接受函数
+    let questionInfoStr = $('div[data-zop-question]').attr('data-zop-question')
+    let questionInfo = JSON.parse(questionInfoStr)
     return Promise.resolve({
-      questionInfo: JSON.parse(questionInfoStr),
-      name: document.querySelector('[itemprop="name"]').getAttribute('content'), // 问题标题
-      url: document.querySelector('[itemprop="url"]').getAttribute('content'),// 问题URL
-      answerCount: Number(document.querySelector('[itemprop="answerCount"]').getAttribute('content')),// 回答数量
+      questionId: questionInfo.id, // 394252086 => https://www.zhihu.com/question/394252086
+      questionTitle: questionInfo.title,
+      answerCount: Number($('[itemprop="answerCount"]').attr('content')),// 回答数量
     })
   }, {})
 
   console.log(`pageInfo`, questionInfo)
-
-  let pageListItemDomSize = await page.evaluate((arr) => {
-    let res = document.querySelectorAll('div.List-item').length || 0
-    return Promise.resolve(res)
-  })
-
-  console.log(`pageListItemDomSize`, pageListItemDomSize)
 
   // 1. 滚动查询
   // 滚动条滚动到底部3次,获取每次滚动条滚动到底部后新增的数据
@@ -160,39 +150,20 @@ async function main() {
   // })
 
   // 1. 滚动查询,并删除已经查询到的
-  let jsonFile = `./1.json`
+  let jsonFile = `./answerJson/${questionInfo.questionId}_${dayjs().format('YYYYMMDD')}.json`
   await fss.remove(jsonFile)
-  await util.asyncEach(_.times(10), async (n, i) => {
+  await util.asyncEach(_.times(Math.ceil(questionInfo.answerCount / 5)), async (n, i) => {
     let newScrollList = await getNewScrollList2(page, n)
+    newScrollList = _.filter(newScrollList, (n, i) => n.answerUpCount > Math.sqrt(questionInfo.answerCount))
+    if (_.size(newScrollList) === 0) {
+      console.log(`结束`)
+      return false
+    }
     await util.writeArrayToJsonFile(jsonFile, newScrollList, { flag: 'a' })
+    console.log(`写入数据${_.size(newScrollList)}条`)
   })
 
-  // 2. 分页查询 (按时间排序)
-  // https://www.zhihu.com/question/394252086/answers/updated?page=1
-  // await page.goto('https://www.zhihu.com/question/394252086/answers/updated?page=1')// 打开页面
-
-  // 直接在node中获取html信息
-  // setTimeout(async (n, i) => {
-  //   let linkHtml = await page.$eval('.List-item', (ele) => ele.innerHTML)// 获取文本
-  //   console.log(`linkHtml`, linkHtml)
-  // }, 3000 * 10)
-
-  // 等待页面存在此元素
-  // page.waitForSelector('#content_left .result').then(async () => {
-  //   const resultEle = await page.$('#content_left .result:nth-child(2) h3 a')
-  //   resultEle.click()// 打开一个页面1
-  //
-  //   let linkHtml = await page.$eval('#content_left .result:nth-child(2) h3 a', (ele) => ele.innerHTML)// 获取文本
-  //   console.log(` linkHtml`, linkHtml)
-  //
-  //   // await page.tap('#content_left .result:nth-child(1) h3 a');// 打开一个页面2
-  // })
-
-  // await page.screenshot({path: './test.png'})// 截屏保存
-
-  // const content = await page.content();// 获取页面内容
-  // console.log(`main content`, content);
-  // await browser.close();// 关闭浏览器
+  await browser.close()// 关闭浏览器
 }
 
-main()
+main('https://www.zhihu.com/question/269715940')

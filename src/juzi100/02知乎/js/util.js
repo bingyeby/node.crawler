@@ -5,10 +5,10 @@
  */
 async function delay(time = 1000) {
   return new Promise((resolve, reject) => {
-    console.log('延迟开始:', new Date())
-    console.log(`延迟时长:`, time)
+    console.log('|-延迟开始:', new Date())
+    console.log(`延迟时长:`, time, 'ms')
     setTimeout(() => {
-      console.log('延迟结束:', new Date())
+      console.log('|-延迟结束:', new Date())
       resolve()
     }, time)
   })
@@ -30,7 +30,10 @@ async function asyncMap(array, callback) {
 * */
 async function asyncEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array)
+    let res = await callback(array[index], index, array)
+    if (res === false) {
+      break
+    }
   }
 }
 
@@ -71,3 +74,4 @@ window.util = {
   asyncEach,
   waitFor,
 }
+

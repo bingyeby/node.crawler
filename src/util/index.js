@@ -21,7 +21,10 @@ async function asyncMap(array, callback) {
 * */
 async function asyncEach(array, callback) {
   for (let index = 0; index < array.length; index++) {
-    await callback(array[index], index, array)
+    let res = await callback(array[index], index, array)
+    if (res === false) {
+      break
+    }
   }
 }
 
@@ -29,7 +32,8 @@ async function asyncEach(array, callback) {
 * 将[{id:'1'},{id:'2'}]结构list输出到json文件
 * 一行为一个对象字符串,无逗号
 * config
-*   {flag:'w'}
+*   {flag:'w'} 覆盖
+*   {flag:'a+'}  追加
 * */
 async function writeArrayToJsonFile(path, array, config) {
   let str = _.map(array, (n, i) => {
@@ -37,7 +41,6 @@ async function writeArrayToJsonFile(path, array, config) {
   }).join('\n')
   try {
     await fss.writeFile(path, `${str}\n`, config)
-    console.log('success!')
   } catch (err) {
     console.error(err)
   }
@@ -50,10 +53,10 @@ async function writeArrayToJsonFile(path, array, config) {
  */
 async function delay(time = 1000) {
   return new Promise((resolve, reject) => {
-    console.log('延迟开始:', new Date())
-    console.log(`延迟时长:`, time)
+    console.log('|-延迟开始:', new Date())
+    console.log(`延迟时长:`, time, 'ms')
     setTimeout(() => {
-      console.log('延迟结束:', new Date())
+      console.log('|-延迟结束:', new Date())
       resolve()
     }, time)
   })

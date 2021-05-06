@@ -1,0 +1,26 @@
+  // 2. 分页查询 (按时间排序)
+  // https://www.zhihu.com/question/394252086/answers/updated?page=1
+  // await page.goto('https://www.zhihu.com/question/394252086/answers/updated?page=1')// 打开页面
+
+  // 直接在node中获取html信息
+  // setTimeout(async (n, i) => {
+  //   let linkHtml = await page.$eval('.List-item', (ele) => ele.innerHTML)// 获取文本
+  //   console.log(`linkHtml`, linkHtml)
+  // }, 3000 * 10)
+
+  // 等待页面存在此元素
+  // page.waitForSelector('#content_left .result').then(async () => {
+  //   const resultEle = await page.$('#content_left .result:nth-child(2) h3 a')
+  //   resultEle.click()// 打开一个页面1
+  //
+  //   let linkHtml = await page.$eval('#content_left .result:nth-child(2) h3 a', (ele) => ele.innerHTML)// 获取文本
+  //   console.log(` linkHtml`, linkHtml)
+  //
+  //   // await page.tap('#content_left .result:nth-child(1) h3 a');// 打开一个页面2
+  // })
+
+  // await page.screenshot({path: './test.png'})// 截屏保存
+
+  // const content = await page.content();// 获取页面内容
+  // console.log(`main content`, content);
+  // await browser.close();// 关闭浏览器
