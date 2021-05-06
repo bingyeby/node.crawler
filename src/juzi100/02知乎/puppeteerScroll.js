@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer')
 const _ = require('lodash')
 const util = require('../../util')
+const fss = require('fs-extra')
 
 /*
 * 执行滚动到页面底部一次,页面则会增加新的数据
@@ -63,6 +64,38 @@ async function getNewScrollList(page, pageListItemDomSize) {
   return listItemScrollAddList
 }
 
+async function getNewScrollList2(page, itemNumber) {
+  return await page.evaluate(async (itemNumber) => {
+    await util.waitFor(() => $('div.List-item').length > 0)
+    let itemList = $('div.List-item')
+    let itemListData = []
+    itemList.each((i, n) => {
+      let item = $(n)
+      let answerInfoStr = item.find('.ContentItem.AnswerItem').attr('data-zop') || '{}'
+      let answerInfo = JSON.parse(answerInfoStr)// {itemId,authorName}
+      itemListData.push({
+          questionId: window.location.href.match(/question\/(\d+)/)[1],
+
+          answerId: answerInfo.itemId, // answerId 549811428 => https://www.zhihu.com/question/266574241/answer/549811428
+
+          answerUpCount: item.find('[itemprop="upvoteCount"]').attr('content'),// 点赞数
+          answerCommentCount: item.find('[itemprop="commentCount"]').attr('content'),// 评论数量
+          answerDate: item.find('[itemprop="dateCreated"]').attr('content'),// 回答时间
+          answerUrl: item.find('.ContentItem-time a').attr('href'),// url 可以单独打开
+          // answerHtml: item.find('.RichContent-inner').html(),// 回答内容HTML
+          answerAuthorName: item.find('.AnswerItem-authorInfo [itemprop="name"]').attr('content'),// 回答者昵称
+        },
+      )
+    })
+    console.log(`itemListData`, itemListData)
+    window.scroll(0, window.document.body.scrollHeight)
+    await util.delay(3000) // 延迟等待页面滚动后数据加载
+    itemList.remove()
+    $('.Pc-word').remove()
+    return itemListData
+  }, itemNumber)
+}
+
 async function main() {
   // 启动浏览器
   const browser = await puppeteer.launch({
@@ -75,7 +108,7 @@ async function main() {
   })
 
   const page = await browser.newPage()  // 打开空白页面
-  await page.setViewport({ width: 1000, height: 800 })// 控制视图大小
+  await page.setViewport({ width: 1200, height: 800 })// 控制视图大小
   await page.goto('https://www.zhihu.com/question/394252086')// 打开页面
 
   // 控制表单 对input框填充数据
@@ -84,10 +117,12 @@ async function main() {
   // 往页面注入js,执行失败,安全策略问题
   // await page.addScriptTag({ path: '\\jquery.js' })
   // await page.addScriptTag({ url: 'https://code.jquery.com/jquery-3.4.1.min.js' })
+  await util.addScriptFile(page, './js/jquery.js')
+  await util.addScriptFile(page, './js/lodash.min.js')
+  await util.addScriptFile(page, './js/util.js')
 
   // 等待一个元素出现后点击该元素
   page.waitForSelector('.Modal-closeButton').then(async () => {
-
     console.log(`112`, 112)
     page.tap('.Modal-closeButton')// 操作dom元素
   })
@@ -96,21 +131,14 @@ async function main() {
 
   // 在浏览器页面中执行如下代码,并将执行后结果返回到node.js
   // 操作dom元素2: 在页面上下文中执行 获取打开的网页中的宿主环境 // 打印语句在浏览器控制台看见
-  let questionInfo = await page.evaluate((config) => {
+  let questionInfo = await page.evaluate((config) => { // config => 接受普通对象,函数不接受
     console.log(`111`, 111)
-
     let questionInfoStr = document.querySelector('div[data-zop-question]').getAttribute('data-zop-question')
-    let questionTitle = Number(document.querySelector('[itemprop="name"]').getAttribute('content'))
-    let questionUrl = Number(document.querySelector('[itemprop="url"]').getAttribute('content'))
-    let answerCount = Number(document.querySelector('[itemprop="answerCount"]').getAttribute('content'))
-
-    console.log(`document.querySelector('[itemprop="name"]')`, document.querySelector('[itemprop="name"]'))
-
     return Promise.resolve({
       questionInfo: JSON.parse(questionInfoStr),
-      questionTitle, // 问题标题
-      questionUrl,// 问题URL
-      answerCount,// 回答数量
+      name: document.querySelector('[itemprop="name"]').getAttribute('content'), // 问题标题
+      url: document.querySelector('[itemprop="url"]').getAttribute('content'),// 问题URL
+      answerCount: Number(document.querySelector('[itemprop="answerCount"]').getAttribute('content')),// 回答数量
     })
   }, {})
 
@@ -123,13 +151,25 @@ async function main() {
 
   console.log(`pageListItemDomSize`, pageListItemDomSize)
 
-  await util.asyncEach(_.times(3), async (n, i) => {
-    let newScrollList = await getNewScrollList(page, n)
-    console.log(`newScrollList`, newScrollList)
-    await util.writeArrayToJsonFile(`./1.json`, newScrollList, { flag: 'a' })
+  // 1. 滚动查询
+  // 滚动条滚动到底部3次,获取每次滚动条滚动到底部后新增的数据
+  // await util.asyncEach(_.times(3), async (n, i) => {
+  //   let newScrollList = await getNewScrollList(page, n)
+  //   console.log(`newScrollList`, newScrollList)
+  //   await util.writeArrayToJsonFile(`./1.json`, newScrollList, { flag: 'a' })
+  // })
+
+  // 1. 滚动查询,并删除已经查询到的
+  let jsonFile = `./1.json`
+  await fss.remove(jsonFile)
+  await util.asyncEach(_.times(10), async (n, i) => {
+    let newScrollList = await getNewScrollList2(page, n)
+    await util.writeArrayToJsonFile(jsonFile, newScrollList, { flag: 'a' })
   })
 
-  console.log(`end...`)
+  // 2. 分页查询 (按时间排序)
+  // https://www.zhihu.com/question/394252086/answers/updated?page=1
+  // await page.goto('https://www.zhihu.com/question/394252086/answers/updated?page=1')// 打开页面
 
   // 直接在node中获取html信息
   // setTimeout(async (n, i) => {

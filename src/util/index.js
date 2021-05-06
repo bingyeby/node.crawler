@@ -50,8 +50,10 @@ async function writeArrayToJsonFile(path, array, config) {
  */
 async function delay(time = 1000) {
   return new Promise((resolve, reject) => {
+    console.log('延迟开始:', new Date())
+    console.log(`延迟时长:`, time)
     setTimeout(() => {
-      console.log(new Date())
+      console.log('延迟结束:', new Date())
       resolve()
     }, time)
   })
@@ -62,7 +64,7 @@ async function delay(time = 1000) {
  * @param url
  * @returns {Promise<any>}
  */
-let urlResponse = (url, option = {}) => {urlResponse
+let urlResponse = (url, option = {}) => {
   return new Promise((resolve, reject) => {
     superagent.get(url).charset(option.charset || 'gbk').set('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36').then((res) => {
       resolve(res.text)
@@ -72,10 +74,27 @@ let urlResponse = (url, option = {}) => {urlResponse
   })
 }
 
+/**
+ * 注入js文件
+ * @param page
+ * @param jsFilePath 文件路径 './jquery.js'
+ * @returns {Promise<void>}
+ */
+async function addScriptFile(page, jsFilePath) {
+  if (_.isNil(jsFilePath)) {
+    return
+  }
+  let jqueryJs = (await fss.readFile(jsFilePath)).toString()
+  await page.evaluate((jqueryJs) => {
+    eval(jqueryJs)
+  }, jqueryJs)
+}
+
 module.exports = {
   asyncMap,
   asyncEach,
   writeArrayToJsonFile,
   delay,
   urlResponse,
+  addScriptFile,
 }
