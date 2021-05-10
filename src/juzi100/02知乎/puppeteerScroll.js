@@ -150,7 +150,7 @@ async function main(url) {
   // })
 
   // 1. 滚动查询,并删除已经查询到的
-  let jsonFile = `./answerJson/${questionInfo.questionId}_${dayjs().format('YYYYMMDD')}.json`
+  let jsonFile = `./answerJson/${questionInfo.questionId}.json`
   await fss.remove(jsonFile)
   await util.asyncEach(_.times(Math.ceil(questionInfo.answerCount / 5)), async (n, i) => {
     let newScrollList = await getNewScrollList2(page, n)
@@ -166,4 +166,4 @@ async function main(url) {
   await browser.close()// 关闭浏览器
 }
 
-main('https://www.zhihu.com/question/269715940')
+main('https://www.zhihu.com/question/326308904')
