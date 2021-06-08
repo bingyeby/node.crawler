@@ -116,9 +116,9 @@ async function main(url) {
   // 往页面注入js,执行失败,安全策略问题
   // await page.addScriptTag({ path: '\\jquery.js' })
   // await page.addScriptTag({ url: 'https://code.jquery.com/jquery-3.4.1.min.js' })
-  await util.addScriptFile(page, './js/jquery.js')
-  await util.addScriptFile(page, './js/lodash.min.js')
-  await util.addScriptFile(page, './js/util.js')
+  await util.addScriptFile(page, '../../../js/jquery.js')
+  await util.addScriptFile(page, '../../../js/lodash.min.js')
+  await util.addScriptFile(page, '../../../js/util.js')
 
   // 等待一个元素出现后点击该元素(登录提醒框)
   page.waitForSelector('.Modal-closeButton').then(async () => {

@@ -26,9 +26,9 @@ async function main() {
   // 往页面注入js,执行失败,安全策略问题,固采用eval方式注入
   // await page.addScriptTag({ path: '\\jquery.js' })
   // await page.addScriptTag({ url: 'https://code.jquery.com/jquery-3.4.1.min.js' })
-  await util.addScriptFile(page, './js/jquery.js')
-  await util.addScriptFile(page, './js/lodash.min.js')
-  await util.addScriptFile(page, './js/util.js')
+  await util.addScriptFile(page, '../../../js/jquery.js')
+  await util.addScriptFile(page, '../../../js/lodash.min.js')
+  await util.addScriptFile(page, '../../../js/util.js')
 
   // // 登录模态框出现后,将其关闭 ( 添加await则变为并行 )
   // page.waitForSelector('.Modal-closeButton').then(async () => {
