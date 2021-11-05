@@ -12,6 +12,10 @@
     "nodemon": "^1.18.11"
   },
   "dependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/node": "^7.16.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.16.0",
+    "@babel/preset-env": "^7.16.0",
     "axios": "^0.21.1",
     "cheerio": "^1.0.0-rc.3",
     "dayjs": "^1.10.4",
