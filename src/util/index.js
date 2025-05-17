@@ -8,7 +8,7 @@ charset(superagent) //设置字符
 /*
 * 异步map
 * */
-async function asyncMap(array, callback) {
+exports.asyncMap = async function (array, callback){
   let arr = []
   for (let index = 0; index < array.length; index++) {
     arr.push(await callback(array[index], index, array))
@@ -19,7 +19,7 @@ async function asyncMap(array, callback) {
 /*
 * 异步each
 * */
-async function asyncEach(array, callback) {
+exports.asyncEach = async function (array, callback){
   for (let index = 0; index < array.length; index++) {
     let res = await callback(array[index], index, array)
     if (res === false) {
@@ -35,7 +35,7 @@ async function asyncEach(array, callback) {
 *   {flag:'w'} 覆盖
 *   {flag:'a+'}  追加
 * */
-async function writeArrayToJsonFile(path, array, config) {
+exports.writeArrayToJsonFile = async function (path, array, config){
   let str = _.map(array, (n, i) => {
     return JSON.stringify(n)
   }).join('\n')
@@ -51,7 +51,7 @@ async function writeArrayToJsonFile(path, array, config) {
  * @param time 延迟时间,单位ms
  * @returns {Promise<*>}
  */
-async function delay(time = 1000) {
+exports.delay = async function (time = 1000){
   return new Promise((resolve, reject) => {
     console.log('|-延迟开始:', new Date())
     console.log(`延迟时长:`, time, 'ms')
@@ -67,7 +67,7 @@ async function delay(time = 1000) {
  * @param url
  * @returns {Promise<any>}
  */
-let urlResponse = (url, option = {}) => {
+exports.urlResponse = (url, option = {}) => {
   return new Promise((resolve, reject) => {
     superagent.get(url).charset(option.charset || 'gbk').set('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36').then((res) => {
       resolve(res.text)
@@ -83,7 +83,7 @@ let urlResponse = (url, option = {}) => {
  * @param jsFilePath 文件路径 './jquery.js'
  * @returns {Promise<void>}
  */
-async function addScriptFile(page, jsFilePath) {
+exports.addScriptFile = async function (page, jsFilePath){
   if (_.isNil(jsFilePath)) {
     return
   }
@@ -93,11 +93,18 @@ async function addScriptFile(page, jsFilePath) {
   }, jqueryJs)
 }
 
-module.exports = {
-  asyncMap,
-  asyncEach,
-  writeArrayToJsonFile,
-  delay,
-  urlResponse,
-  addScriptFile,
+exports.test = async (res) => {
+  return 111
 }
+
+/**
+ * 导出方式2
+ */
+// module.exports = {
+//   asyncMap,
+//   asyncEach,
+//   writeArrayToJsonFile,
+//   delay,
+//   urlResponse,
+//   addScriptFile,
+// }

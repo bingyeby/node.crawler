@@ -1,1 +1,5 @@
-D:\00\node.crawler>npx babel-node  --presets @babel/preset-env  ./src/jijin/index.es.js
+### 运行es模块:
+
+    npm run es
+    =>
+    npx babel-node  --presets @babel/preset-env  ./src/jijin/index.es.js
